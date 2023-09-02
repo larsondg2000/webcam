@@ -1,8 +1,7 @@
 import glob
-import os
 import cv2
 import time
-from emailing import send_email
+from emailing import send_email, clean_folder
 from threading import Thread
 
 # Video capture "cv2.CAP_DSHOW" starts camera quicker
@@ -12,16 +11,6 @@ time.sleep(1)
 first_frame = None
 status_list = []
 count = 1
-
-
-def clean_folder():
-    """
-    Cleans folder after email is sent
-    :return:
-    """
-    images = glob.glob("images/*.png")
-    for image in images:
-        os.remove(image)
 
 
 while True:
@@ -72,7 +61,7 @@ while True:
     status_list.append(status)
     # get last two items of list
     status_list = status_list[-2:]
-    print(status_list)
+    # print(status_list)
 
     # checks status list-> when list goes from [1,1] to [1,0] items leaves frame
     if status_list[0] == 1 and status_list[1] == 0:
@@ -80,23 +69,16 @@ while True:
         email_thread = Thread(target=send_email, args=(image_with_object, ))
         email_thread.daemon = True
 
-        # setup thread for clean_folder() call
-        clean_thread = Thread(target=clean_folder)
-        clean_thread.daemon = True
-
         # email thread call
         email_thread.start()
 
     cv2.imshow("Video", frame)
 
-    # lets you quit by pressing "q" key
+    # lets you quit by pressing "q"
     key = cv2.waitKey(1)
 
     if key == ord("q"):
         break
 
-# call clean function after email sent
-clean_thread.start()
 
 video.release()
-
